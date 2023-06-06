@@ -14,6 +14,14 @@ from keras import layers
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn.metrics import ConfusionMatrixDisplay, classification_report, confusion_matrix
 
+def my_team():
+    '''
+    Return the list of the team members of this assignment submission as a list
+    of triplet of the form (student_number, first_name, last_name)
+    
+    '''
+    return [ (11028840, 'Chaz', 'Tan'), (10778209, 'Zach', 'Edwards'), (11039639, 'Harrison', 'Leach') ]
+
 def resize(images, new_size):
     '''  
     Resizes an image to a specified new size.
@@ -441,6 +449,6 @@ def task_2():
     plt.show()
 
 if __name__ == "__main__":
-    pass
+    my_team()
     task_1()
     #task_2()
