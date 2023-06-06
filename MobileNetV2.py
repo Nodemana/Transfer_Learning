@@ -8,8 +8,7 @@ import numpy as np
 import math
 from time import process_time
 
-import tensorflow as tf 
-import tensorflow_addons as tfa
+import tensorflow as tf
 from tensorflow import keras
 from keras import layers  
 from keras.preprocessing.image import ImageDataGenerator
@@ -144,13 +143,15 @@ def load_directory(base_path):
     '''
     # find all images in the directory
     files = glob.glob(os.path.join(base_path, '*.jpg'))
+    folder_len = len("small_flower_dataset/")
+
     x = []
     y = []
     
     # loop through the images, loading them and extracting the subject ID
     for f in files:
         x.append(cv2.cvtColor(cv2.imread(f), cv2.COLOR_BGR2RGB) / 255.0)
-        y.append(base_path[-1])
+        y.append(base_path[folder_len:])
         
     return np.array(x), np.array(y)
 
@@ -170,8 +171,11 @@ def load_data(base_path, test_split, val_split):
     @return
         the training, validation and test images/labels arrays
     '''
+    # mapping flower classes to values
+    daisy_class, dandelion_class, roses_class, sunflowers_class, tulips_class = 0,1,2,3,4
     # Loads Daisy Data
-    daisy_X, daisy_Y = load_directory(os.path.join(base_path, 'small_flower_dataset/1'))
+    daisy_X, daisy_Y = load_directory(os.path.join(base_path, 'small_flower_dataset/daisy'))
+    daisy_Y = np.full(len(daisy_X), daisy_class)
     size = len(daisy_X)
     split = math.floor(size*(val_split + test_split))
     split_x = daisy_X[0:split]
@@ -181,7 +185,8 @@ def load_data(base_path, test_split, val_split):
     train_Y = daisy_Y[split+1:]
 
     # Loads Dandelion Data
-    dandelion_X, dandelion_Y = load_directory(os.path.join(base_path, 'small_flower_dataset/2'))
+    dandelion_X, dandelion_Y = load_directory(os.path.join(base_path, 'small_flower_dataset/dandelion'))
+    dandelion_Y = np.full(len(dandelion_X), dandelion_class)
     size = len(dandelion_X)
     split = math.floor(size*(val_split + test_split))
     split_x = np.concatenate((split_x, dandelion_X[0:split]))
@@ -191,7 +196,8 @@ def load_data(base_path, test_split, val_split):
     train_Y = np.concatenate((train_Y, dandelion_Y[split+1:]))
 
     # Loads Roses Data
-    roses_X, roses_Y = load_directory(os.path.join(base_path, 'small_flower_dataset/3'))
+    roses_X, roses_Y = load_directory(os.path.join(base_path, 'small_flower_dataset/roses'))
+    roses_Y = np.full(len(roses_X), roses_class)
     size = len(roses_X)
     split = math.floor(size*(val_split + test_split))
     split_x = np.concatenate((split_x, roses_X[0:split]))
@@ -201,7 +207,8 @@ def load_data(base_path, test_split, val_split):
     train_Y = np.concatenate((train_Y, roses_Y[split+1:]))
 
     # Loads Sunflower Data
-    sunflowers_X, sunflowers_Y = load_directory(os.path.join(base_path, 'small_flower_dataset/4'))
+    sunflowers_X, sunflowers_Y = load_directory(os.path.join(base_path, 'small_flower_dataset/sunflowers'))
+    sunflowers_Y = np.full(len(sunflowers_X), sunflowers_class)
     size = len(sunflowers_X)
     split = math.floor(size*(val_split + test_split))
     split_x = np.concatenate((split_x, sunflowers_X[0:split]))
@@ -211,7 +218,8 @@ def load_data(base_path, test_split, val_split):
     train_Y = np.concatenate((train_Y, sunflowers_Y[split+1:]))
 
     # Loads Tulip Data
-    tulips_X, tulips_Y = load_directory(os.path.join(base_path, 'small_flower_dataset/5'))
+    tulips_X, tulips_Y = load_directory(os.path.join(base_path, 'small_flower_dataset/tulips'))
+    tulips_Y = np.full(len(tulips_X), tulips_class)
     size = len(tulips_X)
     split = math.floor(size*(val_split + test_split))
     split_x = np.concatenate((split_x, tulips_X[0:split]))
@@ -246,11 +254,6 @@ def load_data(base_path, test_split, val_split):
     p = np.random.permutation(len(test_X))
     test_X = test_X[p]
     test_Y = test_Y[p]
-    
-    # Subtract one to move labels into [0, 4] range
-    train_Y = train_Y.astype(int) - 1
-    val_Y = val_Y.astype(int) - 1
-    test_Y = test_Y.astype(int) - 1
 
     return train_X, train_Y, val_X, val_Y, test_X, test_Y
 
@@ -265,6 +268,12 @@ def task_1():
         - the confusion matrix of the problem after running the test set through the trained network
     '''
     ############################## LOADING DATA ############################################
+    # Data & ML Model Parameters
+    learn_rate = 0.01
+    momentum = 0.0
+    batch = 50
+    epoch_num = 10
+    channels = 3
     image_size = 128 # Play around with this (bigger is better)
     train_X, train_Y, val_X, val_Y, test_X, test_Y = load_data(base_path="", test_split=0.2, val_split=0.1) # You could adjust the splits here if you wanted, maybe a bigger test set would be insigtful of the models performance
 
@@ -277,7 +286,7 @@ def task_1():
     plot_images(train_X, train_Y)
 
     ##################################### ARCHITECTURE STUFF ###########################################
-    mobile_base = keras.applications.MobileNetV2(input_shape=(image_size, image_size, 3),
+    mobile_base = keras.applications.MobileNetV2(input_shape=(image_size, image_size, channels),
                                                     include_top=False,)
     mobile_base.trainable = False
 
@@ -293,15 +302,15 @@ def task_1():
 
     # Set some settings
     # tbh no idea what the optimizer does, something to do with the gradient decsent i assume
-    optimizer = tf.keras.optimizers.SGD(learning_rate=0.01, ##### <- Play with this #####
-                                        momentum=0.0,       ##### <- Play with this #####
+    optimizer = tf.keras.optimizers.SGD(learning_rate=learn_rate, ##### <- Play with this #####
+                                        momentum=momentum,       ##### <- Play with this #####
                                         nesterov=False)
     network.compile(optimizer=optimizer, loss=['sparse_categorical_crossentropy'], metrics=['accuracy']) # That loss argument is pre important, categorical_crossentropy is for multi classification tasks
 
     # We timing this fool
     time_1 = process_time()
     # Train the network (just the classification head)
-    history = network.fit(train_X, train_Y, epochs=10, batch_size = 50, validation_data = (val_X, val_Y)) # Try increase the batch size and increase the epochs and see the performance
+    history = network.fit(train_X, train_Y, epochs=epoch_num, batch_size = batch, validation_data = (val_X, val_Y)) # Try increase the batch size and increase the epochs and see the performance
     time_2 = process_time() # fool timed
     train_time = str(time_2 - time_1) 
     print("Time to train model 1: " + train_time)
@@ -342,7 +351,13 @@ def task_2():
         - the confusion matrix of the problem after running the test set through the trained network
     '''
         ############################## LOADING DATA ############################################
+    # Data & ML Model Parameters
+    learn_rate = 0.01
+    momentum = 0.0
+    batch = 50
+    epoch_num = 10
     image_size = 128
+    channels = 3
     train_X, train_Y, val_X, val_Y, test_X, test_Y = load_data(base_path="", test_split=0.2, val_split=0.1)
 
     # Bit of resizing as neural networks expect constistent sized inputs
@@ -354,7 +369,7 @@ def task_2():
     plot_images(train_X, train_Y)
 
     ##################################### ARCHITECTURE STUFF ###########################################
-    mobile_base = keras.applications.MobileNetV2(input_shape=(image_size, image_size, 3),
+    mobile_base = keras.applications.MobileNetV2(input_shape=(image_size, image_size, channels),
                                                     include_top=False,)
     mobile_base.trainable = False
 
@@ -384,15 +399,15 @@ def task_2():
 
     # Set some settings
     # tbh no idea what the optimizer does, something to do with the gradient decsent i assume
-    optimizer = tf.keras.optimizers.SGD(learning_rate=0.01,
-                                        momentum=0.0,
+    optimizer = tf.keras.optimizers.SGD(learning_rate=learn_rate,
+                                        momentum=momentum,
                                         nesterov=False)
     classification_head.compile(optimizer=optimizer, loss=['sparse_categorical_crossentropy'], metrics=['accuracy']) # That loss argument is pre important, categorical_crossentropy is for multi classification tasks
 
     # We timing this fool
     time_1 = process_time()
     # Train the network (just the classification head)
-    history = classification_head.fit(train_embeddings, train_Y, epochs=10, batch_size = 50, validation_data = (val_embeddings, val_Y))
+    history = classification_head.fit(train_embeddings, train_Y, epochs=epoch_num, batch_size = batch, validation_data = (val_embeddings, val_Y))
     time_2 = process_time() # fool timed
     train_time = str(time_2 - time_1) 
     print("Time to train model 1: " + train_time)
@@ -419,13 +434,6 @@ def task_2():
     train_Y = np.argmax(train_Y, axis=1) if train_Y.ndim > 1 else train_Y
     test_Y = np.argmax(test_Y, axis=1) if test_Y.ndim > 1 else test_Y
 
-    #Debug
-    #print(train_pred_Y.shape)
-    #print(test_pred_Y.shape)
-    #print(train_Y.shape)
-    #print(test_Y.shape)
-
-
     # Now you can evaluate the model
     eval_model(train_pred_Y, train_Y, test_pred_Y, test_Y)
 
@@ -434,5 +442,5 @@ def task_2():
 
 if __name__ == "__main__":
     pass
-    #task_1()
+    task_1()
     #task_2()
