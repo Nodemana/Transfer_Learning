@@ -15,29 +15,57 @@ from keras import layers
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn.metrics import ConfusionMatrixDisplay, classification_report, confusion_matrix
 
-
-# Resize an array of images
-#  images:   array of images, of shape (samples, width, height, channels)
-#  new_size: tuple of the new size, (new_width, new_height)
-#
-#  returns:  resized array of images, (samples, new_width, new_height, channels)
-#
 def resize(images, new_size):
+    '''  
+    Resizes an image to a specified new size.
+    
+    @param images: 
+        array of images, of shape (samples, width, height, channels)
+    
+    @param new_size: 
+        tuple of the new size, (new_width, new_height)
+
+    @return
+        resized image
+    '''
     # tensorflow has an image resize funtion that can do this in bulk
     # note the conversion back to numpy after the resize
     return tf.image.resize(images, new_size).numpy()
 
 def resize_images(images, width, height):
+    '''  
+    Resizes a given array of images all to the same standard size of the height
+    and width provided. The returned array of resized images is a numpy array.
+    
+    @param images: 
+        array of images, of shape (samples, width, height, channels)
+    
+    @param width: 
+        the new width value desried
+
+    @param height: 
+        the new height value desried
+
+    @return
+        resized array of images, (samples, new_width, new_height, channels) 
+    '''
     resized_images = []
+    # iterate through the passed images
     for img in images:
+        # resize them and add them to the returned array
         resized_images.append(cv2.resize(img, (width, height)))
     return np.array(resized_images)
 
-# Plot some images and their labels. Will plot the first 50 samples in a 10x5 grid
-#  x: array of images, of shape (samples, width, height, channels)
-#  y: labels of the images
-#
 def plot_images(x, y):
+    '''  
+    Plots some images and their labels. Will plot the first 50 samples in a 10x5 grid
+    
+    @param x: 
+        array of images, of shape (samples, width, height, channels)
+    
+    @param y: 
+        labels of the images
+    '''
     fig = plt.figure(figsize=[15, 18])
     for i in range(50):
         ax = fig.add_subplot(5, 10, i + 1)
@@ -75,14 +103,17 @@ def plot_history(history):
     ax.plot(history['val_accuracy'], label="Validation Accuracy")
     ax.legend()
 
-
-# load the images in a directory
-#   base_path: path to the data
-#
-#   returns:   numpy arrays of size (samples, width, height, channels), and size (samples) for 
-#              images and thier labels
 def load_directory(base_path):
+    '''  
+    load the data stored in a specifc directory
+    
+    @param base_path: 
+        path to the data
 
+    @return
+        numpy arrays of size (samples, width, height, channels), and size (samples) for 
+        #images and thier labels
+    '''
     # find all images in the directory
     files = glob.glob(os.path.join(base_path, '*.jpg'))
     x = []
@@ -95,14 +126,22 @@ def load_directory(base_path):
         
     return np.array(x), np.array(y)
 
-# load the data
-#   base_path: path to the data, within the directory that this points to there should be a 'Training' 
-#              and 'Testing' directory
-#
-#   returns:   loaded data
-#
 def load_data(base_path, test_split, val_split):
+    '''  
+    load the image data and split it into the training, test and validation sets
     
+    @param base_path: 
+        path to the data
+    
+    @param test_split: 
+        the amount of images to be used in the test set from the overall data, a value > 0 and < 1
+
+    @param val_split: 
+        the amount of images to be used in the validation set from the overall data, a value > 0 and < 1
+
+    @return
+        the training, validation and test images/labels arrays
+    '''
     # Loads Daisy Data
     daisy_X, daisy_Y = load_directory(os.path.join(base_path, 'small_flower_dataset/1'))
     size = len(daisy_X)
@@ -188,6 +227,15 @@ def load_data(base_path, test_split, val_split):
     return train_X, train_Y, val_X, val_Y, test_X, test_Y
 
 def task_1():
+    '''  
+    Build and train the neural network on the Standard Transfer Leanring method. Evaluate
+    its performance in the training period and its predictions in the testing period.
+    
+    @plot
+        - An batch of the images with their correct labels
+        - the loss vs epoch and accuracy vs epoch graphs of the model in training and validation
+        - the confusion matrix of the problem after running the test set through the trained network
+    '''
     ############################## LOADING DATA ############################################
     image_size = 128 # Play around with this (bigger is better)
     train_X, train_Y, val_X, val_Y, test_X, test_Y = load_data(base_path="", test_split=0.2, val_split=0.1) # You could adjust the splits here if you wanted, maybe a bigger test set would be insigtful of the models performance
@@ -266,6 +314,14 @@ def task_1():
     plt.show()
 
 def task_2():
+    '''  
+    Build and train the neural network on the Accelerated Transfer Leanring method. Evaluate
+    its performance in the training period and its predictions in the testing period.
+    
+    @plot
+        - the loss vs epoch and accuracy vs epoch graphs of the model in training and validation
+        - the confusion matrix of the problem after running the test set through the trained network
+    '''
         ############################## LOADING DATA ############################################
     image_size = 128
     train_X, train_Y, val_X, val_Y, test_X, test_Y = load_data(base_path="", test_split=0.2, val_split=0.1)
