@@ -74,6 +74,22 @@ def plot_images(x, y):
         ax.axis('off')
 
 def eval_model(Y_train_pred, Y_train, Y_test_pred, Y_test):
+    '''  
+    Evaluates the accuracy and other metrics of predicted values vs true values.
+    
+    @param Y_train_pred: 
+        Predicted train values.
+    @param Y_train:
+        True train values.
+    @param Y_test_pred:
+        Predicted test values.
+    @param Y_test
+        True test values.
+
+    @return
+        numpy arrays of size (samples, width, height, channels), and size (samples) for 
+        #images and thier labels.
+    '''
     fig = plt.figure(figsize=[25, 8])
     ax = fig.add_subplot(1, 2, 1)
     conf_matrix = confusion_matrix(Y_train, Y_train_pred)
@@ -84,8 +100,19 @@ def eval_model(Y_train_pred, Y_train, Y_test_pred, Y_test):
     ConfusionMatrixDisplay(conf_matrix).plot(ax=ax)
     ax.set_title('Test Set Performance: %s' % (sum(Y_test_pred == Y_test)/len(Y_test)));    
     print(classification_report(Y_test, Y_test_pred))
+    
 
 def plot_history(history):
+    '''  
+    load the data stored in a specifc directory
+        
+    @param history: 
+        a trained model 
+
+    @plot
+        Two subplots which include the training history of the 
+        accuracy and loss of the model vs training epochs.
+    '''
     fig = plt.figure(figsize=[20, 6])
     ax = fig.add_subplot(1, 2, 1)
     plt.title("Loss vs Epochs", fontsize = 30)
@@ -102,6 +129,7 @@ def plot_history(history):
     ax.plot(history['accuracy'], label="Training Accuracy")
     ax.plot(history['val_accuracy'], label="Validation Accuracy")
     ax.legend()
+
 
 def load_directory(base_path):
     '''  
@@ -286,10 +314,8 @@ def task_1():
     train_pred_Y = network.predict(train_X)
     test_pred_Y = network.predict(test_X)
 
-
     # Plot Loss & Accuracy History
     plot_history(history.history)
-
 
     # This stuff is converting probabilities into a yes its this class.
     # Convert probabilities to class labels
@@ -299,13 +325,6 @@ def task_1():
     # Also make sure your true labels are class labels and not one-hot encoded
     train_Y = np.argmax(train_Y, axis=1) if train_Y.ndim > 1 else train_Y
     test_Y = np.argmax(test_Y, axis=1) if test_Y.ndim > 1 else test_Y
-
-    #Debug
-    #print(train_pred_Y.shape)
-    #print(test_pred_Y.shape)
-    #print(train_Y.shape)
-    #print(test_Y.shape)
-
 
     # Now you can evaluate the model
     eval_model(train_pred_Y, train_Y, test_pred_Y, test_Y)
@@ -413,6 +432,7 @@ def task_2():
     # This makes the plots visable.
     plt.show()
 
-
-#task_1()
-task_2()
+if __name__ == "__main__":
+    pass
+    #task_1()
+    #task_2()
